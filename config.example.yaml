@@ -19,8 +19,8 @@ scraper:
 filters:
   - name: 'Free Items - Furniture'
     url: 'https://www.kleinanzeigen.de/s-zu-verschenken/berlin/moebel/k0c192l1000r35'
-    telegramChatId: '-1001234567890'  # Same as above chatId but as string
-    telegramThreadId: 3  # Different thread for this filter
+    telegramChatId: '-1001234567890'  # Chat ID as string
+    telegramThreadId: 3  # Thread for this filter
 
   - name: 'Furniture for Sale'
     url: 'https://www.kleinanzeigen.de/s-wohnzimmer/berlin/preis::500/moebel/k0c88l1000r35'

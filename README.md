@@ -50,28 +50,17 @@ database:
   path: './data/ads.db'
 
 # Scraping Configuration
-scraping:
+scraper:
   intervalMinutes: 30
   maxRetries: 3
   delayBetweenRequests: 1000
 
 # Search Filters
 filters:
-  - name: 'Мій фільтр'
-    # Спосіб 1: Використовувати прямий URL (найпростіший)
+  - name: 'My Filter'
     url: 'https://www.kleinanzeigen.de/s-anzeigen/berlin/c203?minPrice=500&maxPrice=1500'
-
-    # Спосіб 2: Або налаштувати параметри вручну (якщо url не вказаний)
-    # category: "immobilien"
-    # location: "berlin"
-    # priceMin: 500
-    # priceMax: 1500
-    # keywords: ["wohnung", "apartment"]
-    # excludeKeywords: ["WG", "möbliert"]
-
-    # Telegram налаштування
     telegramChatId: 'YOUR_CHAT_ID'
-    # telegramThreadId: 123  # Опціонально для груп з тредами
+    # telegramThreadId: 123  # Optional for groups with threads
 ```
 
 ### 3. Docker Deployment (Recommended)
@@ -123,7 +112,7 @@ database:
 ### Scraping Configuration
 
 ```yaml
-scraping:
+scraper:
   intervalMinutes: 30 # How often to scrape (in minutes)
   maxRetries: 3 # Maximum retry attempts per filter
   delayBetweenRequests: 1000 # Delay between requests (in milliseconds)
@@ -131,26 +120,24 @@ scraping:
 
 ### Filter Configuration
 
-Є два способи налаштування фільтрів:
-
-#### Спосіб 1: Використання прямого URL (рекомендовано)
+#### Method 1: Using direct URL (recommended)
 
 ```yaml
 filters:
-  - name: 'Мій фільтр'
+  - name: 'My Filter'
     url: 'https://www.kleinanzeigen.de/s-anzeigen/berlin/c203?minPrice=500&maxPrice=1500'
     telegramChatId: 'YOUR_CHAT_ID'
-    telegramThreadId: 123 # Опціонально
+    telegramThreadId: 123 # Optional
 ```
 
-**Як отримати URL:**
+**How to get the URL:**
 
-1. Перейдіть на [kleinanzeigen.de](https://www.kleinanzeigen.de)
-2. Налаштуйте всі фільтри (категорія, локація, ціна, ключові слова)
-3. Скопіюйте URL з адресної строки браузера
-4. Вставте в конфігурацію
+1. Go to [kleinanzeigen.de](https://www.kleinanzeigen.de)
+2. Set all filters (category, location, price, keywords)
+3. Copy the URL from your browser's address bar
+4. Paste it into the config
 
-#### Спосіб 2: Ручне налаштування параметрів
+#### Method 2: Manual parameter configuration
 
 ```yaml
 filters:

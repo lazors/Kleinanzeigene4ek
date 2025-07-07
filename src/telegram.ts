@@ -78,11 +78,10 @@ export class TelegramNotifier {
 
   private formatAdMessage(ad: Ad): string {
     return (
-      `🆕 <b>Neues kostenloses Sofa gefunden!</b>\n\n` +
-      `📌 <b>${ad.title}</b>\n\n` +
-      `📝 ${ad.description}\n\n` +
+      `🆕 <b>${ad.title}</b>\n\n` +
+      `📋 ${ad.description}\n\n` +
       `📍 ${ad.location}\n` +
-      `💰 ${ad.price}\n\n` +
+      (ad.price && ad.price !== 'Zu verschenken' ? `💰 ${ad.price}\n\n` : '') +
       `🔗 <a href="${ad.url}">Zur Anzeige</a>`
     );
   }
