@@ -80,16 +80,16 @@ docker-compose down
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Start in development mode
-npm run dev
+pnpm run dev
 
 # Build for production
-npm run build
+pnpm run build
 
 # Start production build
-npm start
+pnpm start
 ```
 
 ## Configuration Reference
@@ -266,10 +266,10 @@ src/
 ### Available Scripts
 
 ```bash
-npm run build         # Build TypeScript
-npm run start         # Start production server
-npm run dev          # Start development server
-npm run clean        # Clean build directory
+pnpm run build        # Build TypeScript
+pnpm run start        # Start production server
+pnpm run dev         # Start development server
+pnpm run clean       # Clean build directory
 ```
 
 ## Security Considerations
