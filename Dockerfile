@@ -5,20 +5,26 @@ FROM node:20-slim
 WORKDIR /app
 
 # Set npm cache directory to a writable location
-ENV NPM_CONFIG_CACHE=/app/.npm
+# Configure pnpm environment
+ENV PNPM_HOME=/app/.pnpm
+ENV PATH=$PNPM_HOME:$PATH
+
+# Enable pnpm via Corepack
+RUN corepack enable pnpm \
+   && corepack prepare pnpm@9.12.1 --activate
 
 # Install dependencies first for better caching
-COPY package*.json ./
-RUN npm install
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 # Build TypeScript code
-RUN npm run build
+RUN pnpm run build
 
 # Create necessary directories and set up permissions
-RUN mkdir -p /app/data /app/logs /app/.npm \
+RUN mkdir -p /app/data /app/logs /app/.pnpm \
     && chown -R node:node /app \
     && chmod -R 755 /app \
     && chmod 777 /app/data
@@ -30,7 +36,7 @@ chown -R node:node /app/data 2>/dev/null || true\n\
 chmod -R 777 /app/data 2>/dev/null || true\n\
 \n\
 # Switch to node user and start the application\n\
-exec gosu node npm start' > /app/start.sh \
+exec gosu node pnpm start' > /app/start.sh \
     && chmod +x /app/start.sh
 
 # Install gosu for proper user switching
