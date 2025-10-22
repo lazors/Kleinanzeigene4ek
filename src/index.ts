@@ -1,49 +1,70 @@
 import * as fs from 'fs';
 import * as yaml from 'yaml';
-import { Config, Filter } from './types';
+import { Config } from './types';
 import { scrapeAds } from './scraper';
 import { AdDatabase } from './database';
 import { TelegramNotifier } from './telegram';
 
-// Load configuration
-const config: Config = yaml.parse(fs.readFileSync('config.yaml', 'utf8'));
+const CONFIG_PATH = process.env.CONFIG_PATH ?? 'config.yaml';
+const FILTER_DELAY_MS = 3000;
+const AD_DELAY_MS = 1000;
 
-// Initialize services
+const sleep = (ms: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+function loadConfig(configPath: string): Config {
+  try {
+    const fileContent = fs.readFileSync(configPath, 'utf8');
+    return yaml.parse(fileContent) as Config;
+  } catch (error: any) {
+    console.error(`Failed to load config from ${configPath}:`, error.message ?? error);
+    process.exit(1);
+  }
+}
+
+const config = loadConfig(CONFIG_PATH);
+
+if (!Array.isArray(config.filters) || config.filters.length === 0) {
+  console.warn('No filters configured. Exiting.');
+  process.exit(0);
+}
+
 const database = new AdDatabase(config.database.path);
 const telegram = new TelegramNotifier(config.telegram);
 
+let isCheckRunning = false;
+
 async function checkForNewAds() {
+  if (isCheckRunning) {
+    console.warn('Previous check still running, skipping this interval.');
+    return;
+  }
+
   console.log('Checking for new ads...');
+  isCheckRunning = true;
 
   try {
-    // Process each filter
-    for (const filter of config.filters) {
+    for (const [index, filter] of config.filters.entries()) {
       console.log(`Processing filter: ${filter.name}`);
+
+      if (index > 0) {
+        console.log('Waiting before processing next filter...');
+        await sleep(FILTER_DELAY_MS);
+      }
 
       try {
         const ads = await scrapeAds(filter.url);
         console.log(`Found ${ads.length} ads for filter: ${filter.name}`);
 
-        // Add a small delay between filters to reduce load
-        if (config.filters.indexOf(filter) > 0) {
-          console.log('Waiting 3 seconds before processing next filter...');
-          await new Promise((resolve) => setTimeout(resolve, 3000));
-        }
-
         for (const ad of ads) {
           try {
-            console.log(
-              `Processing ad ${ad.id}: "${ad.title}" (${ad.location})`
-            );
+            console.log(`Processing ad ${ad.id}: "${ad.title}" (${ad.location})`);
             const isSent = database.isAdSent(ad, filter.name);
-            console.log(
-              `Ad ${ad.id} already sent for filter ${filter.name}: ${isSent}`
-            );
+            console.log(`Ad ${ad.id} already sent for filter ${filter.name}: ${isSent}`);
 
             if (!isSent) {
               console.log(`New ad found in ${filter.name}: ${ad.title}`);
 
-              // Try to send Telegram notification with filter-specific settings
               try {
                 await telegram.sendAdNotification(ad, {
                   chatId: filter.telegramChatId,
@@ -59,12 +80,9 @@ async function checkForNewAds() {
                 );
               }
 
-              // Mark as sent regardless of Telegram success/failure
               try {
                 database.markAdAsSent(ad, filter.name);
-                console.log(
-                  `Marked ad as sent for filter ${filter.name}: ${ad.id}`
-                );
+                console.log(`Marked ad as sent for filter ${filter.name}: ${ad.id}`);
               } catch (dbError: any) {
                 console.error(
                   `Error marking ad as sent "${ad.title}":`,
@@ -75,34 +93,29 @@ async function checkForNewAds() {
               console.log(`Skipping already sent ad: ${ad.title}`);
             }
 
-            // Add a small delay between ads to reduce Telegram API load
-            await new Promise((resolve) => setTimeout(resolve, 1000));
+            await sleep(AD_DELAY_MS);
           } catch (adError: any) {
-            console.error(
-              `Error processing ad "${ad.title}":`,
-              adError.message || adError
-            );
+            console.error(`Error processing ad "${ad.title}":`, adError.message || adError);
           }
         }
       } catch (filterError: any) {
-        console.error(
-          `Error processing filter "${filter.name}":`,
-          filterError.message || filterError
-        );
+        console.error(`Error processing filter "${filter.name}":`, filterError.message || filterError);
       }
     }
   } catch (error: any) {
     console.error('Error in check cycle:', error.message || error);
+  } finally {
+    isCheckRunning = false;
   }
 }
 
-// Initial check
+const intervalMs = Math.max(config.scraper.intervalMinutes, 1) * 60 * 1000;
+
 checkForNewAds();
+setInterval(() => {
+  void checkForNewAds();
+}, intervalMs);
 
-// Schedule regular checks
-setInterval(checkForNewAds, config.scraper.intervalMinutes * 60 * 1000);
-
-// Handle shutdown
 process.on('SIGINT', () => {
   console.log('Shutting down...');
   database.close();
