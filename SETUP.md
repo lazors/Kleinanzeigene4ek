@@ -16,10 +16,10 @@ First, let's test if everything works:
 
 ```bash
 # Install dependencies
-npm install
+pnpm install
 
 # Test the scraper
-npm test
+pnpm test
 ```
 
 This will:
@@ -34,7 +34,7 @@ If the test works, start the full application:
 
 ```bash
 # Start the scraper
-npm start
+pnpm start
 ```
 
 The scraper will:
